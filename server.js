@@ -8,10 +8,9 @@ app.use(express.json());
 app.use(cors());
  
 const EXTENSION_CLIENT_ID = 'w3tli745gm128l6p6300j0rwzv1bng';
-const EXTENSION_SECRET    = 'KEQe4P8sBK/UTJwwpCowfImr6YQeQ9gYT2Jel277S';
+const EXTENSION_SECRET    = 'knklbaiGeqnatMasmV/UtMGHdkLJWQBCruImzAuOuic=';
  
 function makeJWT(channelId) {
-  // Il secret delle estensioni Twitch è in base64 - va decodificato
   const secret = Buffer.from(EXTENSION_SECRET, 'base64');
   const payload = {
     exp:          Math.floor(Date.now() / 1000) + 60,
@@ -31,15 +30,14 @@ app.post('/send', async (req, res) => {
   try {
     const token = makeJWT(channelId);
     console.log('Invio PubSub per canale:', channelId);
-    console.log('Token generato (primi 50 chars):', token.substring(0, 50));
  
     const response = await axios.post(
       'https://api.twitch.tv/helix/extensions/pubsub',
       {
-        target:             ['broadcast'],
-        broadcaster_id:     channelId,
+        target:              ['broadcast'],
+        broadcaster_id:      channelId,
         is_global_broadcast: false,
-        message:            JSON.stringify(payload)
+        message:             JSON.stringify(payload)
       },
       {
         headers: {
