@@ -2,18 +2,19 @@ const express = require('express');
 const cors    = require('cors');
 const jwt     = require('jsonwebtoken');
 const axios   = require('axios');
- 
+
 const app = express();
 app.use(express.json());
 app.use(cors());
- 
+
 const EXTENSION_CLIENT_ID = 'w3tli745gm128l6p6300j0rwzv1bng';
 const EXTENSION_SECRET    = 'knklbaiGeqnatMasmV/UtMGHdkLJWQBCruImzAuOuic=';
- 
+
 // ── STATO IN MEMORIA ──────────────────────────────────────────────
-let currentState = null; // null = nessun quiz attivo
+let currentState = null;   // null = nessun quiz attivo
+let viewerScores  = {};    // viewerId -> punteggio corrente
 // ─────────────────────────────────────────────────────────────────
- 
+
 function makeJWT(channelId) {
   const secret = Buffer.from(EXTENSION_SECRET, 'base64');
   const payload = {
@@ -25,25 +26,48 @@ function makeJWT(channelId) {
   };
   return jwt.sign(payload, secret);
 }
- 
+
+function getLeaderboard(limit) {
+  return Object.entries(viewerScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit || 10)
+    .map(([id, score]) => ['Spettatore-' + id.slice(-4), score]);
+}
+
+// ── NUOVO: riceve il punteggio corrente di uno spettatore ─────────
+app.post('/score', (req, res) => {
+  const { viewerId, score } = req.body;
+  if (!viewerId || typeof score !== 'number') {
+    return res.status(400).json({ error: 'viewerId e score richiesti' });
+  }
+  viewerScores[viewerId] = score;
+  res.json({ ok: true });
+});
+// ─────────────────────────────────────────────────────────────────
+
 app.post('/send', async (req, res) => {
   const { channelId, payload } = req.body;
   if (!channelId || !payload) {
     return res.status(400).json({ error: 'channelId e payload richiesti' });
   }
- 
-  // ── Salva lo stato corrente ───────────────────────────────────
+
+  // ── Gestione stato e classifica ─────────────────────────────────
   if (payload.type === 'NEW_QUESTION') {
-    currentState = payload; // salva la domanda attiva
-  } else if (payload.type === 'QUIZ_END' || payload.type === 'QUIZ_RESET') {
-    currentState = null;    // quiz terminato, reset stato
+    if (payload.num === 1) viewerScores = {}; // nuovo quiz, azzera i punteggi
+    currentState = payload;
+  } else if (payload.type === 'QUIZ_END') {
+    payload.leaderboard = getLeaderboard(10); // classifica finale calcolata qui
+    currentState = null;
+  } else if (payload.type === 'QUIZ_RESET') {
+    viewerScores = {};
+    currentState = null;
   }
   // ─────────────────────────────────────────────────────────────
- 
+
   try {
     const token = makeJWT(channelId);
     console.log('Invio PubSub per canale:', channelId, '| tipo:', payload.type);
- 
+
     const response = await axios.post(
       'https://api.twitch.tv/helix/extensions/pubsub',
       {
@@ -68,19 +92,16 @@ app.post('/send', async (req, res) => {
     res.status(500).json({ error: errData });
   }
 });
- 
-// ── NUOVO ENDPOINT: stato corrente del quiz ───────────────────────
+
 app.get('/state', (req, res) => {
   res.json({ state: currentState });
 });
-// ─────────────────────────────────────────────────────────────────
- 
+
 app.get('/', (req, res) => {
   res.send('SQUIRZ backend attivo! 🎮');
 });
- 
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`SQUIRZ backend in ascolto sulla porta ${PORT}`);
 });
- 
