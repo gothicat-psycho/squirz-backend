@@ -81,12 +81,25 @@ function getPlayers(limit) {
     }));
 }
 
+// Ogni riga: [nome, punteggio, tag]
+// Il 'tag' sono le ultime 8 cifre dell'ID spettatore: serve al pannello per
+// riconoscere se stesso nella classifica anche quando due giocatori hanno
+// scelto lo stesso nome. Non e' un dato identificativo.
 function getLeaderboard(limit) {
   return Object.entries(viewers)
     .filter(([, v]) => typeof v.score === 'number')
     .sort((a, b) => b[1].score - a[1].score)
     .slice(0, limit || 50)
-    .map(([id, v]) => [displayName(id, v), v.score]);
+    .map(([id, v]) => [displayName(id, v), v.score, id.slice(-8)]);
+}
+
+// Tutti i punteggi in ordine, senza nomi: permette a chi resta fuori dai primi
+// 10 di calcolare comunque la propria posizione reale.
+function getAllScores() {
+  return Object.values(viewers)
+    .filter(v => typeof v.score === 'number')
+    .map(v => v.score)
+    .sort((a, b) => b - a);
 }
 
 function resetScores() {
@@ -169,7 +182,10 @@ app.post('/send', async (req, res) => {
     currentQuestionNum = payload.num || 0;
     currentState       = payload;
   } else if (payload.type === 'QUIZ_END') {
-    payload.leaderboard = getLeaderboard(10); // classifica finale con i nomi veri
+    const tuttiPunteggi = getAllScores();
+    payload.leaderboard  = getLeaderboard(50); // primi 50, con nome e tag
+    payload.allScores    = tuttiPunteggi.slice(0, 1000); // per il calcolo della posizione
+    payload.totalPlayers = tuttiPunteggi.length;
     quizActive   = false;
     currentState = payload;  // FIX: lo stato resta disponibile su /state,
                              // cosi' anche i client a polling ricevono la classifica
