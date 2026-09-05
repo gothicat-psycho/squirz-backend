@@ -42,7 +42,9 @@ function makeJWT(channelId) {
 
 // ── GESTIONE GIOCATORI ────────────────────────────────────────────
 function touchViewer(viewerId, name) {
-  if (!viewers[viewerId]) viewers[viewerId] = { name: null, score: null, lastSeen: 0 };
+  if (!viewers[viewerId]) {
+    viewers[viewerId] = { name: null, score: null, lastSeen: 0, joinedAt: Date.now() };
+  }
   const v = viewers[viewerId];
   if (name && String(name).trim()) v.name = String(name).trim().slice(0, 20);
   v.lastSeen = Date.now();
@@ -63,6 +65,20 @@ function displayName(id, v) {
 function countOnline() {
   const now = Date.now();
   return Object.values(viewers).filter(v => now - v.lastSeen <= ONLINE_WINDOW_MS).length;
+}
+
+// Elenco dei collegati in ordine di arrivo, per la dashboard streamer
+function getPlayers(limit) {
+  const now = Date.now();
+  return Object.entries(viewers)
+    .filter(([, v]) => now - v.lastSeen <= ONLINE_WINDOW_MS)
+    .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
+    .slice(0, limit || 100)
+    .map(([id, v]) => ({
+      name:   displayName(id, v),
+      named:  !!v.name,                        // false = non ha ancora scritto il nome
+      score:  typeof v.score === 'number' ? v.score : null
+    }));
 }
 
 function getLeaderboard(limit) {
@@ -132,6 +148,7 @@ app.get('/stats', (req, res) => {
     playing:      leaderboard.length, // chi ha gia' un punteggio nel quiz in corso
     quizActive,
     leaderboard,
+    players:      getPlayers(100),   // chi e' collegato adesso, in ordine di arrivo
     answers:      counts,             // [A, B, C, D] risposte alla domanda in corso
     answered:     counts.reduce((a, b) => a + b, 0),
     questionNum:  currentQuestionNum,
