@@ -189,6 +189,13 @@ app.post('/send', async (req, res) => {
     quizActive   = false;
     currentState = payload;  // FIX: lo stato resta disponibile su /state,
                              // cosi' anche i client a polling ricevono la classifica
+  } else if (payload.type === 'QUIZ_WAITING') {
+    // Lo streamer annuncia lo SQUIRZ: i pannelli passano dalla pausa all'attesa
+    resetScores();
+    answers            = {};
+    currentQuestionNum = 0;
+    quizActive         = false;
+    currentState       = payload;
   } else if (payload.type === 'QUIZ_RESET') {
     resetScores();
     answers            = {};
