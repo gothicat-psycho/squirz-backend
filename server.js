@@ -2,6 +2,7 @@ const express = require('express');
 const cors    = require('cors');
 const jwt     = require('jsonwebtoken');
 const axios   = require('axios');
+const path    = require('path');
 
 const app = express();
 app.use(express.json());
@@ -238,8 +239,13 @@ app.get('/state', (req, res) => {
   res.json({ state: currentState });
 });
 
+// Informativa sulla privacy, richiesta da Twitch per le estensioni mobili
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy.html'));
+});
+
 app.get('/', (req, res) => {
-  res.send('SQUIRZ backend attivo! 🎮');
+  res.send('SQUIRZ backend attivo! 🎮 — <a href="/privacy">Privacy Policy</a>');
 });
 
 const PORT = process.env.PORT || 3000;
