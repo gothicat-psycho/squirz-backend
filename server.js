@@ -15,6 +15,24 @@ const EXTENSION_SECRET    = 'knklbaiGeqnatMasmV/UtMGHdkLJWQBCruImzAuOuic=';
 let currentState = null;   // null = nessun quiz attivo
 let quizActive   = false;
 
+// Ogni cambio di schermata incrementa questo numero. I giocatori web chiedono
+// "e' cambiato qualcosa rispetto alla versione N?" e il server risponde solo
+// quando la risposta e' si': cosi' una pagina aperta fa 2-3 richieste al minuto
+// invece di 30, e il backend regge molti piu' spettatori contemporanei.
+let stateVersion = 0;
+let inAttesaDiNovita = [];   // richieste tenute aperte
+
+function cambiaStato(nuovo){
+  currentState = nuovo;
+  stateVersion++;
+  const attuali = inAttesaDiNovita;
+  inAttesaDiNovita = [];
+  attuali.forEach(function(w){
+    clearTimeout(w.timer);
+    try{ w.res.json({ v: stateVersion, state: currentState }); }catch(e){}
+  });
+}
+
 // viewers[viewerId] = { name, score, lastSeen }
 //   name  = nome scelto dal giocatore nel popup iniziale (null se non ancora inserito)
 //   score = punteggio nel quiz in corso (null se non ha ancora risposto)
@@ -181,28 +199,28 @@ app.post('/send', async (req, res) => {
     if (payload.num === 1) { resetScores(); quizActive = true; } // nuovo quiz
     answers            = {};              // nuova domanda, distribuzione da zero
     currentQuestionNum = payload.num || 0;
-    currentState       = payload;
+    cambiaStato(payload);
   } else if (payload.type === 'QUIZ_END') {
     const tuttiPunteggi = getAllScores();
     payload.leaderboard  = getLeaderboard(50); // primi 50, con nome e tag
     payload.allScores    = tuttiPunteggi.slice(0, 1000); // per il calcolo della posizione
     payload.totalPlayers = tuttiPunteggi.length;
     quizActive   = false;
-    currentState = payload;  // FIX: lo stato resta disponibile su /state,
-                             // cosi' anche i client a polling ricevono la classifica
+    cambiaStato(payload);    // lo stato resta disponibile su /state, cosi' anche
+                             // i client a polling ricevono la classifica
   } else if (payload.type === 'QUIZ_WAITING') {
     // Lo streamer annuncia lo SQUIRZ: i pannelli passano dalla pausa all'attesa
     resetScores();
     answers            = {};
     currentQuestionNum = 0;
     quizActive         = false;
-    currentState       = payload;
+    cambiaStato(payload);
   } else if (payload.type === 'QUIZ_RESET') {
     resetScores();
     answers            = {};
     currentQuestionNum = 0;
     quizActive         = false;
-    currentState       = null;
+    cambiaStato(null);
   }
   // ─────────────────────────────────────────────────────────────
 
@@ -236,7 +254,35 @@ app.post('/send', async (req, res) => {
 });
 
 app.get('/state', (req, res) => {
-  res.json({ state: currentState });
+  res.json({ v: stateVersion, state: currentState });
+});
+
+// Attesa lunga: se il chiamante ha gia' la versione corrente, la richiesta
+// resta aperta (max 25 secondi) e risponde appena lo stato cambia davvero.
+app.get('/wait', (req, res) => {
+  const visto = parseInt(req.query.v, 10);
+  if (isNaN(visto) || visto !== stateVersion) {
+    return res.json({ v: stateVersion, state: currentState });
+  }
+  const attesa = { res: res, timer: null };
+  attesa.timer = setTimeout(function(){
+    inAttesaDiNovita = inAttesaDiNovita.filter(function(w){ return w !== attesa; });
+    try{ res.json({ v: stateVersion, state: currentState }); }catch(e){}
+  }, 25000);
+  inAttesaDiNovita.push(attesa);
+  req.on('close', function(){
+    clearTimeout(attesa.timer);
+    inAttesaDiNovita = inAttesaDiNovita.filter(function(w){ return w !== attesa; });
+  });
+});
+
+// Pagina per giocare da YouTube (o da qualsiasi browser, fuori da Twitch)
+app.get('/gioca', (req, res) => {
+  res.sendFile(path.join(__dirname, 'gioca.html'));
+});
+app.get('/viewer.js', (req, res) => {
+  res.type('application/javascript');
+  res.sendFile(path.join(__dirname, 'viewer.js'));
 });
 
 // Informativa sulla privacy, richiesta da Twitch per le estensioni mobili
