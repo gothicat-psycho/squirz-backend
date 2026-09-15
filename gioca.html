@@ -271,62 +271,65 @@ html,body{
      non pu&ograve; crescere fino a spingere il quiz fuori dallo schermo.
      ══════════════════════════════════════════════════════════════ */
   /* ══════════════════════════════════════════════════════════════
-     MODALITA COMPATTA — attiva solo quando c'e' la diretta.
-     Il quiz da solo riempie tutto lo schermo del telefono: per far
-     stare anche il video senza scorrere serve stringere il quiz e
-     mettere le risposte su due colonne.
+     LAYOUT COMPATTO (sempre attivo)
+     Il quiz nella versione larga riempiva da solo tutto lo schermo del
+     telefono, costringendo a scorrere. Qui le risposte vanno su due
+     colonne e le spaziature sono strette: cosi' il quiz sta in una
+     schermata sia da solo sia con la diretta sopra.
+     Quando il video non e' impostato, #tv e' nascosto e il quiz si
+     prende tutta l'altezza disponibile.
      ══════════════════════════════════════════════════════════════ */
-  body.con-video{height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
-  body.con-video #tv{flex:0 0 auto;}
-  body.con-video .web-bar{flex:0 0 auto;padding:5px 12px;font-size:12px;}
-  body.con-video #pausa,
-  body.con-video #idle,
-  body.con-video #result{flex:1 1 auto;min-height:0;overflow-y:auto;}
-  body.con-video #quiz{flex:1 1 auto;min-height:0;overflow-y:auto;}
+  body{height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
+  #tv{flex:0 0 auto;}
+  .web-bar{flex:0 0 auto;padding:5px 12px;font-size:12px;}
+  #pausa,
+  #idle,
+  #result{flex:1 1 auto;min-height:0;overflow-y:auto;}
+  #quiz{flex:1 1 auto;min-height:0;overflow-y:auto;}
 
-  body.con-video #tv .cornice{width:min(100%, calc(27vh * 16 / 9));}
+  #tv .cornice{width:min(100%, calc(27vh * 16 / 9));}
 
-  body.con-video .q-header{padding:6px 12px;}
-  body.con-video .q-logo img{height:38px;}
-  body.con-video .q-num{font-size:15px;}
-  body.con-video .q-score-label{font-size:11px;}
-  body.con-video .q-score{font-size:22px;}
+  .q-header{padding:6px 12px;}
+  .q-logo img{height:38px;}
+  .q-num{font-size:15px;}
+  .q-score-label{font-size:11px;}
+  .q-score{font-size:22px;}
 
-  body.con-video .q-timerbar{padding:6px 12px;}
-  body.con-video .q-timer-label{font-size:12px;margin-bottom:1px;}
-  body.con-video .q-tnum{font-size:22px;}
-  body.con-video .q-tnum-unit{font-size:12px;}
-  body.con-video .q-pts{font-size:13px;}
-  body.con-video .q-timerrow{margin-bottom:4px;}
+  .q-timerbar{padding:6px 12px;}
+  .q-timer-label{font-size:12px;margin-bottom:1px;}
+  .q-tnum{font-size:22px;}
+  .q-tnum-unit{font-size:12px;}
+  .q-pts{font-size:13px;}
+  .q-timerrow{margin-bottom:4px;}
 
-  body.con-video .q-text{font-size:17px;padding:7px 12px;min-height:0;}
+  .q-text{font-size:17px;padding:7px 12px;min-height:0;}
 
   /* risposte su due colonne: e' qui che si recupera la maggior parte dello spazio */
-  body.con-video .q-answers{
+  .q-answers{
     display:grid;grid-template-columns:1fr 1fr;gap:7px;
     padding:0 12px 6px;flex:1 1 auto;min-height:0;
   }
-  body.con-video .ans-btn{padding:8px;gap:8px;border-radius:10px;border-width:2px;}
-  body.con-video .ans-dot{width:28px;height:28px;font-size:15px;}
-  body.con-video .ans-txt{font-size:15px;line-height:1.15;}
-  body.con-video .q-feedback{font-size:16px;padding:2px 12px 6px;min-height:22px;}
+  .ans-btn{padding:8px;gap:8px;border-radius:10px;border-width:2px;}
+  .ans-dot{width:28px;height:28px;font-size:15px;}
+  .ans-txt{font-size:15px;line-height:1.15;}
+  .q-feedback{font-size:16px;padding:2px 12px 6px;min-height:22px;}
 
   /* Schermi bassi (iPhone piccoli, portatili 13"): il video si stringe
      ulteriormente e il quiz si compatta, per non dover scorrere. */
   @media (max-height:700px){
-    body.con-video #tv .cornice{width:min(100%, calc(20vh * 16 / 9));}
-    body.con-video .q-header{padding:4px 12px;}
-    body.con-video .q-logo img{height:30px;}
-    body.con-video .q-num{font-size:13px;}
-    body.con-video .q-score{font-size:19px;}
-    body.con-video .q-timerbar{padding:4px 12px;}
-    body.con-video .q-tnum{font-size:19px;}
-    body.con-video .q-text{font-size:15px;padding:5px 12px;}
-    body.con-video .ans-btn{padding:6px;gap:7px;}
-    body.con-video .ans-dot{width:24px;height:24px;font-size:13px;}
-    body.con-video .ans-txt{font-size:13px;}
-    body.con-video .q-answers{gap:6px;padding:0 12px 5px;}
-    body.con-video .q-feedback{font-size:14px;min-height:18px;}
+    #tv .cornice{width:min(100%, calc(20vh * 16 / 9));}
+    .q-header{padding:4px 12px;}
+    .q-logo img{height:30px;}
+    .q-num{font-size:13px;}
+    .q-score{font-size:19px;}
+    .q-timerbar{padding:4px 12px;}
+    .q-tnum{font-size:19px;}
+    .q-text{font-size:15px;padding:5px 12px;}
+    .ans-btn{padding:6px;gap:7px;}
+    .ans-dot{width:24px;height:24px;font-size:13px;}
+    .ans-txt{font-size:13px;}
+    .q-answers{gap:6px;padding:0 12px 5px;}
+    .q-feedback{font-size:14px;min-height:18px;}
   }
 
   @media (min-width:700px){
@@ -339,12 +342,12 @@ html,body{
 
     /* con la diretta: video piu' contenuto e quiz un filo piu' grande,
        lo spazio in larghezza qui non manca */
-    body.con-video #tv .cornice{width:min(100%, calc(28vh * 16 / 9));}
-    body.con-video .q-text{font-size:19px;}
-    body.con-video .ans-txt{font-size:17px;}
-    body.con-video .ans-dot{width:32px;height:32px;font-size:17px;}
-    body.con-video .q-tnum{font-size:26px;}
-    body.con-video .q-score{font-size:26px;}
+    #tv .cornice{width:min(100%, calc(28vh * 16 / 9));}
+    .q-text{font-size:19px;}
+    .ans-txt{font-size:17px;}
+    .ans-dot{width:32px;height:32px;font-size:17px;}
+    .q-tnum{font-size:26px;}
+    .q-score{font-size:26px;}
   }
 </style>
 </head>
@@ -449,15 +452,13 @@ html,body{
     if(yt.videoId){
       src  = 'https://www.youtube.com/embed/' + yt.videoId + '?autoplay=1&rel=0';
       link = 'https://www.youtube.com/watch?v=' + yt.videoId;
-    } else if(yt.channel && yt.channel.indexOf('INSERISCI') !== 0){
-      // ripiego: embed di canale, punta da solo alla diretta in corso
-      src  = 'https://www.youtube.com/embed/live_stream?channel=' + yt.channel + '&autoplay=1';
-      link = 'https://www.youtube.com/channel/' + yt.channel + '/live';
     }
+    // Nessun ripiego automatico sul canale: fuori diretta YouTube risponde
+    // "video non disponibile" e il riquadro occuperebbe spazio per un errore.
+    // Il video compare solo quando lo streamer incolla il link in dashboard.
     var box = document.getElementById('tv');
     if(!src){
       if(box) box.className='';
-      document.body.classList.remove('con-video');
       ytAttuale=null; return;
     }
     if(src === ytAttuale) return;            // gia' caricato, non ricarico
@@ -465,7 +466,6 @@ html,body{
     document.getElementById('tvframe').src = src;
     document.getElementById('tvlink').href = link;
     box.className = 'on';
-    document.body.classList.add('con-video');
   }
 
   function applica(d){
