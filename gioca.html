@@ -54,6 +54,14 @@ html,body{
   max-width:360px;letter-spacing:.2px;
 }
 .pausa-txt .pt-finale{color:var(--gold);font-weight:600;}
+/* riga per cambiare il nome, sulla schermata di attesa */
+.idle-nome{
+  display:none;margin-top:14px;font-size:15px;color:var(--muted);
+  letter-spacing:.2px;text-align:center;
+}
+.idle-nome.on{display:block;}
+.idle-nome b{color:#ffffff;font-weight:700;}
+.idle-nome a{color:var(--gold);text-decoration:underline;}
 .pausa-txt b{color:var(--gold);font-weight:700;}
 .idle-pre{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;max-width:355px;padding:0 6px;}
 .ip-line{font-size:22px;color:#ffffff;line-height:1.35;letter-spacing:.3px;}
@@ -309,6 +317,10 @@ html,body{
     <div class="idle-green">
       <div>QUESTA SCRITTA LAMPEGGIANTE NON SERVE A NIENTE,</div>
       <div>MA TU GUARDALA LO STESSO</div>
+    </div>
+    <div class="idle-nome" id="idle-nome">
+      Giochi come <b id="idle-nome-val">&mdash;</b> &middot;
+      <a href="#" id="idle-cambia">cambia nome</a>
     </div>
   </div>
 

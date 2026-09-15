@@ -397,11 +397,34 @@ function startTimer(onEnd){
   },1000);
 }
 
+// Riga "Giochi come X - cambia nome" sulla schermata di attesa.
+// Serve a chi ha gia' giocato da questo dispositivo: il nome resta salvato,
+// e senza questa riga non avrebbe modo di modificarlo.
+function aggiornaRigaNome(){
+  var riga = document.getElementById('idle-nome');
+  if(!riga) return;
+  if(!viewerName){ riga.className = 'idle-nome'; return; }
+  var val = document.getElementById('idle-nome-val');
+  if(val) val.textContent = viewerName;
+  riga.className = 'idle-nome on';
+  var link = document.getElementById('idle-cambia');
+  if(link) link.onclick = function(e){
+    e.preventDefault();
+    viewerName = null;                  // dimentico il nome...
+    try{ window.localStorage.removeItem('squirz_nome'); }catch(err){}
+    riga.className = 'idle-nome';
+    askNicknameIfNeeded(function(){     // ...e lo richiedo
+      aggiornaRigaNome();
+    });
+  };
+}
+
 // Lo streamer ha annunciato lo SQUIRZ: mostro la schermata di attesa
 // e chiedo il nome, cosi' i giocatori sono pronti prima della domanda 1.
 function mostraAttesa(){
   showScreen('idle');
-  askNicknameIfNeeded(null);
+  askNicknameIfNeeded(function(){ aggiornaRigaNome(); });
+  aggiornaRigaNome();
 }
 
 function showScreen(id){
