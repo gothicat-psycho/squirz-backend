@@ -240,7 +240,14 @@ html,body{
     display:none;
   }
   #tv.on{display:block;}
-  #tv .cornice{position:relative;width:100%;padding-top:56.25%;}
+  /* Il riquadro resta 16:9 ma non supera il 42% dell'altezza della finestra:
+     senza questo limite, su un monitor largo il video diventava altissimo e
+     spingeva il quiz fuori dallo schermo. */
+  #tv .cornice{
+    position:relative;aspect-ratio:16/9;
+    width:min(100%, calc(42vh * 16 / 9));
+    margin:0 auto;
+  }
   #tv iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
   #tv .nota{
     display:none;padding:10px 12px;font-size:13px;color:#8080b0;
@@ -249,6 +256,41 @@ html,body{
   #tv .nota a{color:var(--gold);}
   #tv.errore .cornice{display:none;}
   #tv.errore .nota{display:block;}
+
+  /* ══════════════════════════════════════════════════════════════
+     SCHERMO GRANDE (computer): diretta a sinistra, quiz a destra.
+     Sotto i 900px resta tutto incolonnato come sul telefono.
+     ══════════════════════════════════════════════════════════════ */
+  @media (min-width:900px){
+    html,body{height:100%;overflow:hidden;}
+    /* Senza video: una sola colonna, contenuto centrato e non stirato. */
+    body{display:flex;flex-direction:column;align-items:center;}
+    .web-bar,#pausa,#idle,#quiz,#result{width:100%;max-width:520px;}
+    #pausa,#idle,#quiz,#result{overflow-y:auto;min-height:0;flex:1;}
+
+    /* Con il video: diretta a sinistra, quiz a destra. La classe con-video
+       viene messa su <body> dal codice quando la diretta viene caricata. */
+    body.con-video{
+      display:grid;align-items:stretch;
+      grid-template-columns:1fr minmax(360px,470px);
+      grid-template-rows:auto 1fr;
+    }
+    body.con-video #tv{
+      grid-column:1;grid-row:1 / span 2;
+      position:static;align-self:center;
+      border-bottom:none;border-right:2px solid var(--gold);
+      padding:0 18px;
+    }
+    body.con-video #tv .cornice{width:100%;}
+    body.con-video .web-bar{grid-column:2;grid-row:1;max-width:none;}
+    body.con-video #pausa,
+    body.con-video #idle,
+    body.con-video #quiz,
+    body.con-video #result{
+      grid-column:2;grid-row:2;max-width:none;
+      overflow-y:auto;min-height:0;
+    }
+  }
 </style>
 </head>
 <body>
@@ -354,12 +396,17 @@ html,body{
       link = 'https://www.youtube.com/channel/' + yt.channel + '/live';
     }
     var box = document.getElementById('tv');
-    if(!src){ if(box) box.className=''; ytAttuale=null; return; }
+    if(!src){
+      if(box) box.className='';
+      document.body.classList.remove('con-video');
+      ytAttuale=null; return;
+    }
     if(src === ytAttuale) return;            // gia' caricato, non ricarico
     ytAttuale = src;
     document.getElementById('tvframe').src = src;
     document.getElementById('tvlink').href = link;
     box.className = 'on';
+    document.body.classList.add('con-video');
   }
 
   function applica(d){
