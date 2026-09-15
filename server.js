@@ -20,6 +20,13 @@ let quizActive   = false;
 // quando la risposta e' si': cosi' una pagina aperta fa 2-3 richieste al minuto
 // invece di 30, e il backend regge molti piu' spettatori contemporanei.
 let stateVersion = 0;
+
+// Diretta YouTube da mostrare nella pagina /gioca.
+// videoId = impostato a mano dallo streamer (metodo affidabile).
+// Se resta vuoto si usa l'embed di canale, che punta da solo alla diretta in
+// corso ma che YouTube non garantisce piu': per questo esiste il campo manuale.
+let youtubeVideoId  = null;
+let YOUTUBE_CHANNEL = 'UCQNgHd7Mycczay_j83PhVow';   // canale YouTube Joey's Garage
 let inAttesaDiNovita = [];   // richieste tenute aperte
 
 function cambiaStato(nuovo){
@@ -29,7 +36,7 @@ function cambiaStato(nuovo){
   inAttesaDiNovita = [];
   attuali.forEach(function(w){
     clearTimeout(w.timer);
-    try{ w.res.json({ v: stateVersion, state: currentState }); }catch(e){}
+    try{ w.res.json({ v: stateVersion, state: currentState, yt: datiYoutube() }); }catch(e){}
   });
 }
 
@@ -253,8 +260,30 @@ app.post('/send', async (req, res) => {
   }
 });
 
+function datiYoutube(){
+  return { videoId: youtubeVideoId, channel: YOUTUBE_CHANNEL };
+}
+
 app.get('/state', (req, res) => {
-  res.json({ v: stateVersion, state: currentState });
+  res.json({ v: stateVersion, state: currentState, yt: datiYoutube() });
+});
+
+// Lo streamer imposta (o cancella) la diretta da mostrare nella pagina /gioca
+app.post('/youtube', (req, res) => {
+  let v = (req.body && req.body.videoId) || '';
+  v = String(v).trim();
+  if (!v) {
+    youtubeVideoId = null;
+    return res.json({ ok: true, videoId: null });
+  }
+  // accetto sia l'ID nudo sia un link completo, in tutti i formati YouTube
+  const m = v.match(/(?:v=|\/live\/|youtu\.be\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  youtubeVideoId = m ? m[1] : (/^[A-Za-z0-9_-]{11}$/.test(v) ? v : null);
+  res.json({ ok: !!youtubeVideoId, videoId: youtubeVideoId });
+});
+
+app.get('/youtube', (req, res) => {
+  res.json(datiYoutube());
 });
 
 // Attesa lunga: se il chiamante ha gia' la versione corrente, la richiesta
@@ -262,12 +291,12 @@ app.get('/state', (req, res) => {
 app.get('/wait', (req, res) => {
   const visto = parseInt(req.query.v, 10);
   if (isNaN(visto) || visto !== stateVersion) {
-    return res.json({ v: stateVersion, state: currentState });
+    return res.json({ v: stateVersion, state: currentState, yt: datiYoutube() });
   }
   const attesa = { res: res, timer: null };
   attesa.timer = setTimeout(function(){
     inAttesaDiNovita = inAttesaDiNovita.filter(function(w){ return w !== attesa; });
-    try{ res.json({ v: stateVersion, state: currentState }); }catch(e){}
+    try{ res.json({ v: stateVersion, state: currentState, yt: datiYoutube() }); }catch(e){}
   }, 25000);
   inAttesaDiNovita.push(attesa);
   req.on('close', function(){
