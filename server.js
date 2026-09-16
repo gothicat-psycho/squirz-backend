@@ -305,11 +305,22 @@ app.get('/wait', (req, res) => {
   });
 });
 
-// Pagina per giocare da YouTube (o da qualsiasi browser, fuori da Twitch)
+// Pagina per giocare da YouTube (o da qualsiasi browser, fuori da Twitch).
+// Cache disattivata: iOS Safari tratteneva la versione vecchia dei file
+// anche in navigazione privata, facendo sembrare rotte modifiche appena fatte.
+function senzaCache(res) {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+}
+
 app.get('/gioca', (req, res) => {
+  senzaCache(res);
   res.sendFile(path.join(__dirname, 'gioca.html'));
 });
 app.get('/viewer.js', (req, res) => {
+  senzaCache(res);
   res.type('application/javascript');
   res.sendFile(path.join(__dirname, 'viewer.js'));
 });
